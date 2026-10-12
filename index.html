@@ -761,41 +761,42 @@
 
         // FUNGSI EKSPOR CSV/EXCEL TERBARU (DENGAN DATA KONTEN LENGKAP)
         function downloadCSV() {
-            if (!currentStudentId) return;
-            const student = appData.students[currentStudentId];
+            function downloadCSV() {
+    if (!currentStudentId) return;
+    const student = appData.students[currentStudentId];
 
-            // Tentukan Pemisah Baris & Tanda Petik Aman
-            const rows = [];
-            rows.push(["REKAP NILAI TOPIK PEMBELAJARAN"]);
-            rows.push(["Nama Siswa:", student.name]);
-            rows.push(["Kode Link:", `#${student.id}`]);
-            rows.push([]);
-            rows.push(["Mata Pelajaran", "Topik Pembelajaran", "Nilai Harian", "Keterangan"]);
+    const rows = [];
+    rows.push(["REKAP NILAI TOPIK PEMBELAJARAN"]);
+    rows.push(["Nama Siswa:", student.name]);
+    rows.push(["Kode Link:", `#${student.id}`]);
+    rows.push([]);
+    rows.push(["Mata Pelajaran", "Topik Pembelajaran", "Nilai Harian", "Keterangan"]);
 
-            Object.keys(appData.topikList).forEach(mapel => {
-                appData.topikList[mapel].forEach(topik => {
-                    const score = (student.scores[mapel] && student.scores[mapel][topik] !== undefined) ? student.scores[mapel][topik] : 0;
-                    const ket = score >= 75 ? "Tuntas" : "Perlu Bimbingan";
-                    rows.push([mapel, topik, score, ket]);
-                });
-            });
+    Object.keys(appData.topikList).forEach(mapel => {
+        appData.topikList[mapel].forEach(topik => {
+            const score = (student.scores[mapel] && student.scores[mapel][topik] !== undefined) ? student.scores[mapel][topik] : 0;
+            const ket = score >= 75 ? "Tuntas" : "Perlu Bimbingan";
+            rows.push([mapel, topik, score, ket]);
+        });
+    });
 
-            // Format ke CSV String secara Rapi
-            let csvContent = "\uFEFF"; // Byte Order Mark (BOM) agar Excel membaca karakter UTF-8 dengan benar
-            rows.forEach(row => {
-                const line = row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(",");
-                csvContent += line + "\r\n";
-            });
+    // Menggunakan UTF-8 BOM agar rapi saat dibuka di Microsoft Excel
+    let csvContent = "\uFEFF"; 
+    rows.forEach(row => {
+        const line = row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(",");
+        csvContent += line + "\r\n";
+    });
 
-            const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement("a");
-            link.setAttribute("href", url);
-            link.setAttribute("download", `Rekap_Nilai_${student.name.replace(/\s+/g, "_")}.csv`);
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        }
+    // Menggunakan Blob agar data tidak terpotong oleh simbol '#'
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `Rekap_Nilai_${student.name.replace(/\s+/g, "_")}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
 
         function switchTab(tabName) {
             document.querySelectorAll(".tab-content").forEach(el => el.classList.add("hidden"));
