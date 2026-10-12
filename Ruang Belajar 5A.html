@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ruang Belajar & Perkembangan Siswa</title>
+    <!-- Tailwind CSS CDN & Font Awesome -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .school-gradient {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+        }
+    </style>
+</head>
+<body class="bg-slate-100 font-sans min-h-screen flex flex-col text-slate-800">
+
+    <!-- Header / Navbar Sekolah -->
+    <header class="school-gradient text-white shadow-lg sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 py-4 flex flex-wrap justify-between items-center gap-2">
+            <div class="flex items-center space-x-3">
+                <i class="fa-solid fa-graduation-cap text-3xl text-yellow-400"></i>
+                <div>
+                    <h1 class="font-bold text-xl leading-tight">Ruang Belajar & Perkembangan Siswa</h1>
+                    <p class="text-xs text-blue-200">Kelas 5 A-UPTD SD Inpres Oebufu</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-2">
+                <!-- Tombol Ubah PIN (Muncul hanya saat Mode Edit Aktif) -->
+                <button id="change-pin-btn" onclick="changePin()" class="hidden bg-slate-700 hover:bg-slate-800 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1.5 shadow">
+                    <i class="fa-solid fa-key text-yellow-400"></i> Ubah PIN
+                </button>
+
+                <!-- Status Mode Edit Guru -->
+                <button id="auth-btn" onclick="toggleEditMode()" class="bg-yellow-500 hover:bg-yellow-600 text-slate-900 px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 shadow">
+                    <i class="fa-solid fa-lock" id="auth-icon"></i>
+                    <span id="auth-status-text">Mode Edit (Guru)</span>
+                </button>
+
+                <a href="#" onclick="showHome(); return false;" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1.5">
+                    <i class="fa-solid fa-house"></i> Beranda
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <div class="max-w-7xl mx-auto px-4 py-6 flex-grow w-full grid grid-cols-1 md:grid-cols-4 gap-6">
+
+        <!-- Sidebar: Daftar 25 Nama Siswa -->
+        <aside class="md:col-span-1 bg-white rounded-xl shadow-md p-4 flex flex-col h-fit">
+            <div class="flex items-center justify-between border-b pb-3 mb-3">
+                <h2 class="font-bold text-slate-700 flex items-center gap-2 text-sm">
+                    <i class="fa-solid fa-users text-blue-600"></i> Daftar Siswa (25)
+                </h2>
+            </div>
+            <nav id="student-list" class="space-y-1 max-h-[70vh] overflow-y-auto pr-1">
+                <!-- Diisi oleh JS -->
+            </nav>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="md:col-span-3">
+            
+            <!-- Tampilan Beranda Utama -->
+            <div id="home-view" class="bg-white rounded-xl shadow-md p-6">
+                <div class="bg-blue-50 border-l-4 border-blue-600 p-4 rounded mb-6">
+                    <h3 class="font-bold text-lg text-blue-900">Selamat Datang Bapak/Ibu Orang Tua & Siswa</h3>
+                    <p class="text-sm text-blue-700 mt-1">Silakan pilih nama siswa dari daftar di sebelah kiri untuk melihat catatan nilai berdasarkan topik pembelajaran harian, modul bahan ajar, serta latihan soal.</p>
+                </div>
+
+                <h4 class="font-bold text-slate-700 mb-3 flex items-center gap-2">
+                    <i class="fa-solid fa-list-check text-blue-600"></i> Pilih Nama Siswa:
+                </h4>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3" id="home-student-grid">
+                    <!-- Diisi oleh JS -->
+                </div>
+            </div>
+
+            <!-- Tampilan Detail Siswa -->
+            <div id="student-view" class="hidden space-y-6">
+                
+                <!-- Card Header Profil Siswa -->
+                <div class="bg-white rounded-xl shadow-md p-6 border-t-4 border-blue-600">
+                    <div class="flex flex-wrap justify-between items-center gap-4">
+                        <div>
+                            <span class="text-xs font-semibold px-2.5 py-0.5 rounded bg-blue-100 text-blue-800">Siswa Aktif</span>
+                            <h2 id="student-name" class="text-2xl font-bold text-slate-800 mt-1">Nama Siswa</h2>
+                            <p id="student-id" class="text-xs text-slate-500">Kode Link: #</p>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <div class="bg-slate-50 border rounded-lg p-3 text-right">
+                                <span class="text-xs text-slate-500 block">Rata-Rata Nilai</span>
+                                <span id="student-gpa" class="text-2xl font-bold text-green-600">0.0</span>
+                            </div>
+                            <button onclick="downloadCSV()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-3 rounded-lg text-sm font-semibold transition flex items-center gap-2 shadow">
+                                <i class="fa-solid fa-file-excel text-lg"></i> Download Nilai
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Link Khusus Siswa -->
+                    <div class="mt-4 pt-3 border-t flex items-center gap-2 text-xs bg-slate-50 p-2 rounded">
+                        <span class="font-semibold text-slate-600 shrink-0"><i class="fa-solid fa-link"></i> Link Khusus Siswa:</span>
+                        <input id="share-link-input" readonly class="w-full bg-white border px-2 py-1 rounded text-slate-600 focus:outline-none select-all">
+                        <button onclick="copyLink()" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded transition shrink-0">Salin Link</button>
+                    </div>
+                </div>
+
+                <!-- Tab Navigasi Menu Siswa -->
+                <div class="bg-white rounded-xl shadow-md overflow-hidden">
+                    <div class="flex border-b bg-slate-50">
+                        <button onclick="switchTab('nilai')" id="tab-btn-nilai" class="tab-btn flex-1 py-3 px-4 font-semibold text-sm text-center border-b-2 border-blue-600 text-blue-600 bg-white">
+                            <i class="fa-solid fa-chart-line mr-1"></i> Nilai Topik Pembelajaran
+                        </button>
+                        <button onclick="switchTab('kelola-topik')" id="tab-btn-kelola-topik" class="tab-btn hidden flex-1 py-3 px-4 font-semibold text-sm text-center text-slate-500 hover:text-blue-600 border-b-2 border-transparent">
+                            <i class="fa-solid fa-plus-circle mr-1"></i> Kelola Topik & Konten
+                        </button>
+                        <button onclick="switchTab('bahan')" id="tab-btn-bahan" class="tab-btn flex-1 py-3 px-4 font-semibold text-sm text-center text-slate-500 hover:text-blue-600 border-b-2 border-transparent">
+                            <i class="fa-solid fa-book-open mr-1"></i> Bahan Ajar
+                        </button>
+                        <button onclick="switchTab('latihan')" id="tab-btn-latihan" class="tab-btn flex-1 py-3 px-4 font-semibold text-sm text-center text-slate-500 hover:text-blue-600 border-b-2 border-transparent">
+                            <i class="fa-solid fa-pen-to-square mr-1"></i> Latihan Soal
+                        </button>
+                    </div>
+
+                    <!-- Isi Tab 1: Nilai Topik Pembelajaran -->
+                    <div id="tab-content-nilai" class="tab-content p-6">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="font-bold text-slate-700 flex items-center gap-2">
+                                <i class="fa-solid fa-list-check text-blue-600"></i> Catatan Nilai Berdasarkan Topik
+                            </h3>
+                            <span id="edit-notice" class="text-xs text-amber-600 font-semibold bg-amber-50 px-2 py-1 rounded border border-amber-200">
+                                <i class="fa-solid fa-eye"></i> Tampilan Orang Tua (Terkunci)
+                            </span>
+                        </div>
+                        <div id="topik-score-container" class="space-y-6">
+                            <!-- Diisi oleh JS -->
+                        </div>
+                    </div>
+
+                    <!-- Isi Tab 2: Kelola Topik, Bahan Ajar, & Soal (Guru) -->
+                    <div id="tab-content-kelola-topik" class="tab-content hidden p-6 space-y-8">
+                        
+                        <!-- 1. Form Tambah & Hapus Topik -->
+                        <div class="bg-slate-50 p-4 rounded-lg border">
+                            <h3 class="font-bold text-slate-700 mb-3 flex items-center gap-2 border-b pb-2">
+                                <i class="fa-solid fa-folder-plus text-blue-600"></i> 1. Tambah Topik Pembelajaran Baru
+                            </h3>
+                            <form onsubmit="handleAddTopik(event)" class="space-y-3 max-w-lg">
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-700 mb-1">Pilih Mata Pelajaran:</label>
+                                    <select id="topik-mapel-select" class="w-full border rounded px-3 py-2 text-sm bg-white focus:ring-2 focus:ring-blue-500">
+                                        <option value="Pendidikan Pancasila">Pendidikan Pancasila</option>
+                                        <option value="Bahasa Indonesia">Bahasa Indonesia</option>
+                                        <option value="Matematika">Matematika</option>
+                                        <option value="IPAS">IPAS</option>
+                                        <option value="PLH">PLH (Pendidikan Lingkungan Hidup)</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-700 mb-1">Nama Topik Materi Baru:</label>
+                                    <input type="text" id="topik-deskripsi-input" placeholder="Contoh: Topik 1: Keanekaragaman Hayati" required class="w-full border rounded px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500">
+                                </div>
+                                <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm font-semibold transition">
+                                    <i class="fa-solid fa-plus"></i> Tambahkan Topik Ke Seluruh Siswa
+                                </button>
+                            </form>
+
+                            <!-- Daftar Hapus Topik -->
+                            <div class="mt-6 pt-4 border-t">
+                                <h4 class="text-xs font-bold text-slate-700 mb-2">Hapus Topik Yang Sudah Ada:</h4>
+                                <div id="delete-topik-list" class="space-y-2 max-h-48 overflow-y-auto pr-1">
+                                    <!-- Diisi oleh JS -->
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 2. Form Tambah Bahan Ajar -->
+                        <div class="bg-slate-50 p-4 rounded-lg border">
+                            <h3 class="font-bold text-slate-700 mb-3 flex items-center gap-2 border-b pb-2">
+                                <i class="fa-solid fa-file-circle-plus text-red-500"></i> 2. Tambah Bahan Ajar Per Mata Pelajaran
+                            </h3>
+                            <form onsubmit="handleAddBahan(event)" class="space-y-3 max-w-lg">
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-700 mb-1">Mata Pelajaran:</label>
+                                    <select id="bahan-mapel-select" class="w-full border rounded px-3 py-2 text-sm bg-white">
+                                        <option value="Pendidikan Pancasila">Pendidikan Pancasila</option>
+                                        <option value="Bahasa Indonesia">Bahasa Indonesia</option>
+                                        <option value="Matematika">Matematika</option>
+                                        <option value="IPAS">IPAS</option>
+                                        <option value="PLH">PLH (Pendidikan Lingkungan Hidup)</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-700 mb-1">Judul Bahan Ajar:</label>
+                                    <input type="text" id="bahan-judul-input" placeholder="Contoh: Modul Rangkuman Bab 1" required class="w-full border rounded px-3 py-2 text-sm">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-700 mb-1">Link File / URL (Google Drive/PDF):</label>
+                                    <input type="url" id="bahan-link-input" placeholder="https://..." required class="w-full border rounded px-3 py-2 text-sm">
+                                </div>
+                                <button type="submit" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded text-sm font-semibold transition">
+                                    <i class="fa-solid fa-plus"></i> Tambah Bahan Ajar
+                                </button>
+                            </form>
+                        </div>
+
+                        <!-- 3. Form Tambah Latihan Soal -->
+                        <div class="bg-slate-50 p-4 rounded-lg border">
+                            <h3 class="font-bold text-slate-700 mb-3 flex items-center gap-2 border-b pb-2">
+                                <i class="fa-solid fa-pen-to-square text-green-600"></i> 3. Tambah Latihan Soal Per Mata Pelajaran
+                            </h3>
+                            <form onsubmit="handleAddLatihan(event)" class="space-y-3 max-w-lg">
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-700 mb-1">Mata Pelajaran:</label>
+                                    <select id="latihan-mapel-select" class="w-full border rounded px-3 py-2 text-sm bg-white">
+                                        <option value="Pendidikan Pancasila">Pendidikan Pancasila</option>
+                                        <option value="Bahasa Indonesia">Bahasa Indonesia</option>
+                                        <option value="Matematika">Matematika</option>
+                                        <option value="IPAS">IPAS</option>
+                                        <option value="PLH">PLH (Pendidikan Lingkungan Hidup)</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-700 mb-1">Judul Latihan Soal / Tugas:</label>
+                                    <input type="text" id="latihan-judul-input" placeholder="Contoh: Kuis Harian Topik 1" required class="w-full border rounded px-3 py-2 text-sm">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-700 mb-1">Tenggat Waktu / Deadline:</label>
+                                    <input type="text" id="latihan-deadline-input" placeholder="Contoh: 20 Oktober 2026" required class="w-full border rounded px-3 py-2 text-sm">
+                                </div>
+                                <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded text-sm font-semibold transition">
+                                    <i class="fa-solid fa-plus"></i> Tambah Latihan Soal
+                                </button>
+                            </form>
+                        </div>
+
+                    </div>
+
+                    <!-- Isi Tab 3: Bahan Ajar -->
+                    <div id="tab-content-bahan" class="tab-content hidden p-6">
+                        <div class="flex flex-wrap justify-between items-center mb-4 gap-2">
+                            <h3 class="font-bold text-slate-700 flex items-center gap-2">
+                                <i class="fa-solid fa-file-pdf text-red-500"></i> Modul & Material Pembelajaran
+                            </h3>
+                            <!-- Filter Mapel -->
+                            <select id="filter-mapel-bahan" onchange="renderBahanAjar()" class="border rounded px-3 py-1 text-xs bg-slate-50 font-semibold text-slate-700">
+                                <option value="Semua">Semua Mata Pelajaran</option>
+                                <option value="Pendidikan Pancasila">Pendidikan Pancasila</option>
+                                <option value="Bahasa Indonesia">Bahasa Indonesia</option>
+                                <option value="Matematika">Matematika</option>
+                                <option value="IPAS">IPAS</option>
+                                <option value="PLH">PLH</option>
+                            </select>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4" id="bahan-ajar-list">
+                            <!-- Diisi oleh JS -->
+                        </div>
+                    </div>
+
+                    <!-- Isi Tab 4: Latihan Soal -->
+                    <div id="tab-content-latihan" class="tab-content hidden p-6">
+                        <div class="flex flex-wrap justify-between items-center mb-4 gap-2">
+                            <h3 class="font-bold text-slate-700 flex items-center gap-2">
+                                <i class="fa-solid fa-list-check text-green-600"></i> Latihan Soal & Tugas Harian
+                            </h3>
+                            <!-- Filter Mapel -->
+                            <select id="filter-mapel-latihan" onchange="renderLatihanSoal()" class="border rounded px-3 py-1 text-xs bg-slate-50 font-semibold text-slate-700">
+                                <option value="Semua">Semua Mata Pelajaran</option>
+                                <option value="Pendidikan Pancasila">Pendidikan Pancasila</option>
+                                <option value="Bahasa Indonesia">Bahasa Indonesia</option>
+                                <option value="Matematika">Matematika</option>
+                                <option value="IPAS">IPAS</option>
+                                <option value="PLH">PLH</option>
+                            </select>
+                        </div>
+                        <div class="space-y-3" id="latihan-soal-list">
+                            <!-- Diisi oleh JS -->
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </main>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t mt-auto py-4 text-center text-xs text-slate-500">
+        &copy; 2026 Portal Perkembangan Belajar Siswa — Laporan Topik Materi Pembelajaran
+    </footer>
+
+    <!-- Script Logic -->
+    <script>
+        let isEditMode = false;
+
+        const studentNames = [
+            "Aldi Niki Banunaek", "Alexa Juliana Adu", "Amirny Putri Kadir", "Aurel Nathania Silla",
+            "Celia Adnalista Hasman", "Daniel Ernesno Li Bifel", "Dedi Kristianto Sabuna", "Deva Nathania Banamtuan",
+            "Dian Natasya Tlaan", "Dirhan Gafariel Suat", "Dwiki Junrianto Boimau", "Gavariel Moedekhai Lele",
+            "Jelita Gheselma Bana", "Julianti Sefanya Duling", "Juventus Oktovianus Sila", "Leonardo D. A. X. Potokatoe",
+            "Marseliano Moa Werong", "Markolion Nitbani", "Marliska Neno", "Matilda Niko Leta",
+            "Paulo Timotio Bria", "Rafael Baseliko Fahik", "Sella J. Missa", "Stela Gida Carvalho Fernandes",
+            "Yohanes Berilino Dout"
+        ];
+
+        const defaultTopik = {
+            "Pendidikan Pancasila": ["Topik 1: Nilai-Nilai Pancasila dalam Kehidupan", "Topik 2: Hak dan Kewajiban Warga Negara"],
+            "Bahasa Indonesia": ["Topik 1: Membaca Teks Laporan Hasil Observasi", "Topik 2: Menulis Paragraf Gagasan Utama"],
+            "Matematika": ["Topik 1: Operasi Hitung Bilangan Bulat", "Topik 2: Pengukuran Luas & Keliling Bangun Datar"],
+            "IPAS": ["Topik 1: Benda dan Perubahannya", "Topik 2: Ekosistem dan Ketahanan Lingkungan"],
+            "PLH": ["Topik 1: Pengolahan Sampah dan Kebersihan", "Topik 2: Penanaman Pohon dan Penghijauan"]
+        };
+
+        function getPinGuru() {
+            return localStorage.getItem("portal_guru_pin") || "1234";
+        }
+
+        function setPinGuru(newPin) {
+            localStorage.setItem("portal_guru_pin", newPin);
+        }
+
+        function changePin() {
+            if (!isEditMode) return;
+            const currentPin = prompt("Masukkan PIN Lama Saat Ini:");
+            if (currentPin === getPinGuru()) {
+                const newPin = prompt("Masukkan PIN Baru Anda:");
+                if (newPin && newPin.trim() !== "") {
+                    setPinGuru(newPin.trim());
+                    alert("PIN Guru berhasil diperbarui!");
+                } else {
+                    alert("PIN tidak boleh kosong.");
+                }
+            } else if (currentPin !== null) {
+                alert("PIN Lama Salah!");
+            }
+        }
+
+        function buildDefaultData() {
+            let data = { 
+                topikList: defaultTopik, 
+                students: {},
+                bahanAjar: [
+                    { mapel: "Pendidikan Pancasila", judul: "Modul Pancasila & Kewarganegaraan", link: "#", tipe: "PDF" },
+                    { mapel: "Matematika", judul: "Panduan Rumus Bangun Datar", link: "#", tipe: "PDF" },
+                    { mapel: "IPAS", judul: "Modul Eksperimen IPA", link: "#", tipe: "Docx" },
+                    { mapel: "PLH", judul: "Panduan Pembuatan Kompos", link: "#", tipe: "PDF" }
+                ],
+                latihanSoal: [
+                    { mapel: "Pendidikan Pancasila", judul: "Kuis Nilai-Nilai Pancasila", deadline: "20 Oktober 2026", status: "Belum Dikerjakan" },
+                    { mapel: "Bahasa Indonesia", judul: "Latihan Menulis Paragraf", deadline: "22 Oktober 2026", status: "Selesai" },
+                    { mapel: "Matematika", judul: "Latihan Soal Hitung Bangun Datar", deadline: "25 Oktober 2026", status: "Belum Dikerjakan" }
+                ]
+            };
+
+            studentNames.forEach((name, index) => {
+                const id = `siswa-${index + 1}`;
+                let scores = {};
+                Object.keys(defaultTopik).forEach(mapel => {
+                    scores[mapel] = {};
+                    defaultTopik[mapel].forEach((topik, tpIdx) => {
+                        scores[mapel][topik] = 75 + ((index + tpIdx * 3) % 20);
+                    });
+                });
+                data.students[id] = { id: id, name: name, scores: scores };
+            });
+            return data;
+        }
+
+        let appData = buildDefaultData();
+
+        try {
+            const saved = localStorage.getItem("portal_siswa_db_v5");
+            if (saved) {
+                const parsed = JSON.parse(saved);
+                if (parsed && parsed.students && Object.keys(parsed.students).length === 25 && parsed.topikList["Pendidikan Pancasila"]) {
+                    appData = parsed;
+                } else {
+                    localStorage.setItem("portal_siswa_db_v5", JSON.stringify(appData));
+                }
+            } else {
+                localStorage.setItem("portal_siswa_db_v5", JSON.stringify(appData));
+            }
+        } catch(e) {
+            appData = buildDefaultData();
+        }
+
+        let currentStudentId = null;
+
+        function saveData() {
+            try {
+                localStorage.setItem("portal_siswa_db_v5", JSON.stringify(appData));
+            } catch(e) {}
+        }
+
+        document.addEventListener("DOMContentLoaded", () => {
+            renderStudentList();
+            renderHomeGrid();
+            handleRouting();
+            window.addEventListener("hashchange", handleRouting);
+        });
+
+        function toggleEditMode() {
+            if (isEditMode) {
+                isEditMode = false;
+                updateAuthUI();
+                alert("Mode Edit dinonaktifkan. Kembali ke Tampilan Orang Tua.");
+            } else {
+                const inputPin = prompt("Masukkan PIN Guru untuk Mengubah Nilai / Mengelola Konten:");
+                if (inputPin === getPinGuru()) {
+                    isEditMode = true;
+                    updateAuthUI();
+                    alert("PIN Benar! Mode Edit Guru Aktif.");
+                } else if (inputPin !== null) {
+                    alert("PIN Salah! Akses diedit ditolak.");
+                }
+            }
+
+            if (currentStudentId) {
+                showStudentDetail(appData.students[currentStudentId]);
+            }
+        }
+
+        function updateAuthUI() {
+            const btnText = document.getElementById("auth-status-text");
+            const btnIcon = document.getElementById("auth-icon");
+            const authBtn = document.getElementById("auth-btn");
+            const tabKelola = document.getElementById("tab-btn-kelola-topik");
+            const notice = document.getElementById("edit-notice");
+            const changePinBtn = document.getElementById("change-pin-btn");
+
+            if (isEditMode) {
+                btnText.innerText = "Keluar Mode Edit";
+                btnIcon.className = "fa-solid fa-lock-open";
+                authBtn.className = "bg-green-500 hover:bg-green-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 shadow";
+                tabKelola.classList.remove("hidden");
+                changePinBtn.classList.remove("hidden");
+                notice.innerHTML = `<i class="fa-solid fa-pen"></i> Mode Edit Guru Aktif`;
+                notice.className = "text-xs text-green-700 font-semibold bg-green-50 px-2 py-1 rounded border border-green-200";
+            } else {
+                btnText.innerText = "Mode Edit (Guru)";
+                btnIcon.className = "fa-solid fa-lock";
+                authBtn.className = "bg-yellow-500 hover:bg-yellow-600 text-slate-900 px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 shadow";
+                tabKelola.classList.add("hidden");
+                changePinBtn.classList.add("hidden");
+                notice.innerHTML = `<i class="fa-solid fa-eye"></i> Tampilan Orang Tua (Terkunci)`;
+                notice.className = "text-xs text-amber-600 font-semibold bg-amber-50 px-2 py-1 rounded border border-amber-200";
+            }
+        }
+
+        function renderStudentList() {
+            const nav = document.getElementById("student-list");
+            if (!nav) return;
+            const studentsArr = Object.values(appData.students);
+            nav.innerHTML = studentsArr.map((s, idx) => `
+                <a href="#${s.id}" id="nav-link-${s.id}" class="block px-3 py-2 rounded-lg text-sm font-medium transition hover:bg-blue-50 hover:text-blue-600 flex items-center justify-between text-slate-600 border-b border-slate-100 last:border-b-0">
+                    <span class="truncate">${idx + 1}. ${s.name}</span>
+                    <i class="fa-solid fa-chevron-right text-xs opacity-50"></i>
+                </a>
+            `).join("");
+        }
+
+        function renderHomeGrid() {
+            const grid = document.getElementById("home-student-grid");
+            if (!grid) return;
+            const studentsArr = Object.values(appData.students);
+            grid.innerHTML = studentsArr.map((s, idx) => `
+                <a href="#${s.id}" class="border rounded-lg p-3 hover:shadow-md transition bg-slate-50 hover:bg-white flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-xs shrink-0">
+                        ${idx + 1}
+                    </div>
+                    <div class="truncate">
+                        <p class="font-semibold text-xs text-slate-800 truncate">${s.name}</p>
+                        <p class="text-[10px] text-blue-600">Buka Catatan Nilai <i class="fa-solid fa-arrow-right"></i></p>
+                    </div>
+                </a>
+            `).join("");
+        }
+
+        function handleRouting() {
+            const hash = window.location.hash.replace("#", "");
+            const student = appData.students[hash];
+
+            document.querySelectorAll("#student-list a").forEach(el => {
+                el.classList.remove("bg-blue-600", "text-white");
+                el.classList.add("text-slate-600");
+            });
+
+            if (student) {
+                currentStudentId = student.id;
+                showStudentDetail(student);
+                const activeNav = document.getElementById(`nav-link-${student.id}`);
+                if (activeNav) {
+                    activeNav.classList.add("bg-blue-600", "text-white");
+                    activeNav.classList.remove("text-slate-600");
+                }
+            } else {
+                showHome();
+            }
+        }
+
+        function showHome() {
+            document.getElementById("home-view").classList.remove("hidden");
+            document.getElementById("student-view").classList.add("hidden");
+            window.location.hash = "";
+        }
+
+        function showStudentDetail(student) {
+            document.getElementById("home-view").classList.add("hidden");
+            document.getElementById("student-view").classList.remove("hidden");
+
+            document.getElementById("student-name").innerText = student.name;
+            document.getElementById("student-id").innerText = `Kode Link: #${student.id}`;
+            document.getElementById("share-link-input").value = window.location.origin + window.location.pathname + `#${student.id}`;
+
+            renderTopikScores(student);
+            renderDeleteTopikList();
+            renderBahanAjar();
+            renderLatihanSoal();
+
+            switchTab('nilai');
+        }
+
+        function renderTopikScores(student) {
+            const container = document.getElementById("topik-score-container");
+            let totalAllScores = 0;
+            let totalTopikCount = 0;
+            let html = "";
+
+            Object.keys(appData.topikList).forEach(mapel => {
+                const topiks = appData.topikList[mapel];
+                let mapelTotal = 0;
+                let mapelCount = 0;
+
+                let topikRows = topiks.map(topik => {
+                    const score = (student.scores[mapel] && student.scores[mapel][topik] !== undefined) ? student.scores[mapel][topik] : 0;
+                    mapelTotal += Number(score);
+                    mapelCount++;
+                    totalAllScores += Number(score);
+                    totalTopikCount++;
+
+                    const readOnlyAttr = isEditMode ? "" : "readonly";
+                    const inputBg = isEditMode ? "bg-white border-blue-400" : "bg-slate-100 border-slate-300";
+
+                    return `
+                        <div class="flex items-center justify-between p-2 bg-white border rounded mb-2 text-xs">
+                            <span class="font-medium text-slate-700 flex-1 pr-2"><i class="fa-solid fa-angle-right text-blue-500 mr-1"></i> ${topik}</span>
+                            <div class="flex items-center gap-2">
+                                <input type="number" min="0" max="100" value="${score}" ${readOnlyAttr}
+                                    onchange="updateScore('${student.id}', '${mapel}', '${topik}', this.value)"
+                                    class="w-16 border rounded text-center py-1 font-bold text-slate-800 ${inputBg} focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                                <span class="px-2 py-1 rounded font-semibold text-[10px] ${score >= 75 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}">
+                                    ${score >= 75 ? 'Tuntas' : 'Perlu Bimbingan'}
+                                </span>
+                            </div>
+                        </div>
+                    `;
+                }).join("");
+
+                const mapelAvg = mapelCount > 0 ? (mapelTotal / mapelCount).toFixed(1) : "0";
+
+                html += `
+                    <div class="border rounded-lg p-4 bg-slate-50">
+                        <div class="flex justify-between items-center mb-3 border-b pb-2">
+                            <h4 class="font-bold text-sm text-blue-900">${mapel}</h4>
+                            <span class="text-xs font-semibold bg-blue-100 text-blue-800 px-2 py-0.5 rounded">Rata-Rata Mapel: ${mapelAvg}</span>
+                        </div>
+                        <div>${topikRows.length > 0 ? topikRows : '<p class="text-xs text-slate-400 italic">Belum ada topik untuk mata pelajaran ini.</p>'}</div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+            const totalAvg = totalTopikCount > 0 ? (totalAllScores / totalTopikCount).toFixed(1) : "0.0";
+            document.getElementById("student-gpa").innerText = totalAvg;
+        }
+
+        function renderDeleteTopikList() {
+            const list = document.getElementById("delete-topik-list");
+            if (!list) return;
+
+            let html = "";
+            Object.keys(appData.topikList).forEach(mapel => {
+                appData.topikList[mapel].forEach(topik => {
+                    html += `
+                        <div class="flex justify-between items-center text-xs bg-white p-2 rounded border">
+                            <span class="truncate pr-2 font-medium"><b>[${mapel}]</b> ${topik}</span>
+                            <button onclick="handleDeleteTopik('${mapel}', '${topik}')" class="bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded text-[10px] font-bold shrink-0">
+                                <i class="fa-solid fa-trash"></i> Hapus
+                            </button>
+                        </div>
+                    `;
+                });
+            });
+            list.innerHTML = html || '<p class="text-xs text-slate-400">Tidak ada topik.</p>';
+        }
+
+        function handleDeleteTopik(mapel, topik) {
+            if (!isEditMode) return;
+            if (confirm(`Yakin ingin menghapus "${topik}" dari ${mapel}?`)) {
+                appData.topikList[mapel] = appData.topikList[mapel].filter(t => t !== topik);
+                
+                Object.keys(appData.students).forEach(sId => {
+                    if (appData.students[sId].scores[mapel]) {
+                        delete appData.students[sId].scores[mapel][topik];
+                    }
+                });
+
+                saveData();
+                showStudentDetail(appData.students[currentStudentId]);
+                alert("Topik berhasil dihapus!");
+            }
+        }
+
+        function updateScore(studentId, mapel, topik, val) {
+            if (!isEditMode) return;
+            const scoreNum = Math.min(100, Math.max(0, Number(val) || 0));
+            if (!appData.students[studentId].scores[mapel]) {
+                appData.students[studentId].scores[mapel] = {};
+            }
+            appData.students[studentId].scores[mapel][topik] = scoreNum;
+            saveData();
+            showStudentDetail(appData.students[studentId]);
+        }
+
+        function handleAddTopik(event) {
+            event.preventDefault();
+            if (!isEditMode) return;
+
+            const mapel = document.getElementById("topik-mapel-select").value;
+            const topikDesc = document.getElementById("topik-deskripsi-input").value.trim();
+
+            if (!topikDesc) return;
+
+            if (!appData.topikList[mapel]) appData.topikList[mapel] = [];
+            appData.topikList[mapel].push(topikDesc);
+
+            Object.keys(appData.students).forEach(sId => {
+                if (!appData.students[sId].scores[mapel]) {
+                    appData.students[sId].scores[mapel] = {};
+                }
+                appData.students[sId].scores[mapel][topikDesc] = 75;
+            });
+
+            saveData();
+            document.getElementById("topik-deskripsi-input").value = "";
+            alert(`Berhasil menambahkan "${topikDesc}" ke mata pelajaran ${mapel}!`);
+            
+            if (currentStudentId) {
+                showStudentDetail(appData.students[currentStudentId]);
+            }
+        }
+
+        function handleAddBahan(event) {
+            event.preventDefault();
+            if (!isEditMode) return;
+
+            const mapel = document.getElementById("bahan-mapel-select").value;
+            const judul = document.getElementById("bahan-judul-input").value.trim();
+            const link = document.getElementById("bahan-link-input").value.trim();
+
+            if (!appData.bahanAjar) appData.bahanAjar = [];
+            appData.bahanAjar.push({ mapel, judul, link, tipe: "PDF" });
+
+            saveData();
+            document.getElementById("bahan-judul-input").value = "";
+            document.getElementById("bahan-link-input").value = "";
+            alert(`Bahan ajar berhasil ditambahkan ke ${mapel}!`);
+            renderBahanAjar();
+        }
+
+        function handleAddLatihan(event) {
+            event.preventDefault();
+            if (!isEditMode) return;
+
+            const mapel = document.getElementById("latihan-mapel-select").value;
+            const judul = document.getElementById("latihan-judul-input").value.trim();
+            const deadline = document.getElementById("latihan-deadline-input").value.trim();
+
+            if (!appData.latihanSoal) appData.latihanSoal = [];
+            appData.latihanSoal.push({ mapel, judul, deadline, status: "Belum Dikerjakan" });
+
+            saveData();
+            document.getElementById("latihan-judul-input").value = "";
+            document.getElementById("latihan-deadline-input").value = "";
+            alert(`Latihan soal berhasil ditambahkan ke ${mapel}!`);
+            renderLatihanSoal();
+        }
+
+        function renderBahanAjar() {
+            const container = document.getElementById("bahan-ajar-list");
+            const filter = document.getElementById("filter-mapel-bahan") ? document.getElementById("filter-mapel-bahan").value : "Semua";
+
+            let items = appData.bahanAjar || [];
+            if (filter !== "Semua") {
+                items = items.filter(b => b.mapel === filter);
+            }
+
+            if (items.length === 0) {
+                container.innerHTML = `<p class="text-xs text-slate-400 col-span-2 py-4 text-center">Belum ada bahan ajar untuk kategori ini.</p>`;
+                return;
+            }
+
+            container.innerHTML = items.map(b => `
+                <div class="border rounded-lg p-3 hover:border-blue-500 transition flex items-start gap-3 bg-slate-50">
+                    <div class="p-2 bg-blue-100 text-blue-600 rounded">
+                        <i class="fa-solid fa-file-pdf text-xl"></i>
+                    </div>
+                    <div>
+                        <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-blue-100 text-blue-800">${b.mapel}</span>
+                        <h4 class="font-bold text-xs text-slate-800 mt-1">${b.judul}</h4>
+                        <a href="${b.link}" target="_blank" class="inline-block mt-2 text-xs font-semibold text-blue-600 hover:underline">
+                            <i class="fa-solid fa-download"></i> Buka / Unduh Material
+                        </a>
+                    </div>
+                </div>
+            `).join("");
+        }
+
+        function renderLatihanSoal() {
+            const container = document.getElementById("latihan-soal-list");
+            const filter = document.getElementById("filter-mapel-latihan") ? document.getElementById("filter-mapel-latihan").value : "Semua";
+
+            let items = appData.latihanSoal || [];
+            if (filter !== "Semua") {
+                items = items.filter(l => l.mapel === filter);
+            }
+
+            if (items.length === 0) {
+                container.innerHTML = `<p class="text-xs text-slate-400 py-4 text-center">Belum ada latihan soal untuk kategori ini.</p>`;
+                return;
+            }
+
+            container.innerHTML = items.map(l => `
+                <div class="border rounded-lg p-3 flex justify-between items-center bg-slate-50">
+                    <div>
+                        <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-blue-100 text-blue-800">${l.mapel}</span>
+                        <h4 class="font-semibold text-xs text-slate-800 mt-1">${l.judul}</h4>
+                        <p class="text-[11px] text-slate-500"><i class="fa-regular fa-clock"></i> Tenggat: ${l.deadline}</p>
+                    </div>
+                    <span class="px-2.5 py-1 text-xs font-bold rounded ${l.status === 'Selesai' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}">
+                        ${l.status}
+                    </span>
+                </div>
+            `).join("");
+        }
+
+        function downloadCSV() {
+            if (!currentStudentId) return;
+            const student = appData.students[currentStudentId];
+
+            let csvContent = "data:text/csv;charset=utf-8,";
+            csvContent += `REKAP NILAI TOPIK PEMBELAJARAN\n`;
+            csvContent += `Nama Siswa: ${student.name}\n`;
+            csvContent += `Kode Link: #${student.id}\n\n`;
+            csvContent += `Mata Pelajaran,Topik Pembelajaran,Nilai Harian,Keterangan\n`;
+
+            Object.keys(appData.topikList).forEach(mapel => {
+                appData.topikList[mapel].forEach(topik => {
+                    const score = (student.scores[mapel] && student.scores[mapel][topik] !== undefined) ? student.scores[mapel][topik] : 0;
+                    const ket = score >= 75 ? "Tuntas" : "Perlu Bimbingan";
+                    csvContent += `"${mapel}","${topik}",${score},"${ket}"\n`;
+                });
+            });
+
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `Nilai_${student.name.replace(/\s+/g, "_")}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function switchTab(tabName) {
+            document.querySelectorAll(".tab-content").forEach(el => el.classList.add("hidden"));
+            document.querySelectorAll(".tab-btn").forEach(el => {
+                el.classList.remove("border-blue-600", "text-blue-600", "bg-white");
+                el.classList.add("border-transparent", "text-slate-500");
+            });
+
+            document.getElementById(`tab-content-${tabName}`).classList.remove("hidden");
+            const btn = document.getElementById(`tab-btn-${tabName}`);
+            if (btn) {
+                btn.classList.add("border-blue-600", "text-blue-600", "bg-white");
+                btn.classList.remove("border-transparent", "text-slate-500");
+            }
+        }
+
+        function copyLink() {
+            const copyText = document.getElementById("share-link-input");
+            copyText.select();
+            document.execCommand("copy");
+            alert("Link khusus siswa berhasil disalin!");
+        }
+    </script>
+</body>
+</html>
